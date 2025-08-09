@@ -91,12 +91,6 @@
 
         .view.active {
             display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
         }
 
         /* Header */
@@ -121,7 +115,6 @@
         .header-actions {
             display: flex;
             gap: 1rem;
-            align-items: center;
         }
 
         .user-info {
@@ -145,7 +138,6 @@
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            font-size: 0.9rem;
         }
 
         .btn-primary {
@@ -442,34 +434,6 @@
             text-align: center;
         }
 
-        .error-message {
-            background: #f44336;
-            color: white;
-            padding: 1rem;
-            border-radius: 10px;
-            margin-bottom: 1rem;
-            text-align: center;
-        }
-
-        /* Loading state */
-        .loading {
-            text-align: center;
-            padding: 2rem;
-            color: #666;
-        }
-
-        .loading::after {
-            content: '...';
-            animation: dots 1s infinite;
-        }
-
-        @keyframes dots {
-            0%, 20% { content: ''; }
-            40% { content: '.'; }
-            60% { content: '..'; }
-            80%, 100% { content: '...'; }
-        }
-
         /* Responsive */
         @media (max-width: 768px) {
             .sidebar {
@@ -498,52 +462,18 @@
 
             .header {
                 padding: 1rem;
-                flex-direction: column;
-                gap: 1rem;
             }
 
             .header h2 {
                 font-size: 1.5rem;
             }
-
-            .header-actions {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-        }
-
-        /* Mobile menu button */
-        .mobile-menu-btn {
-            display: none;
-            position: fixed;
-            top: 1rem;
-            left: 1rem;
-            z-index: 1001;
-            background: rgba(255, 255, 255, 0.9);
-            border: none;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            font-size: 1.5rem;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        @media (max-width: 768px) {
-            .mobile-menu-btn {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
         }
     </style>
 </head>
 <body>
-    <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
-    
     <div class="container">
         <!-- Sidebar Navigation -->
-        <nav class="sidebar" id="sidebar">
+        <nav class="sidebar">
             <div class="logo">
                 <h1>EventFlow Pro</h1>
                 <div class="owner-name">by Meraj</div>
@@ -599,769 +529,14 @@
         <!-- Main Content Area -->
         <main class="main-content">
             <!-- Auth View -->
-            <div id="auth-view" class="view">
+            <div id="auth-view" class="view active">
                 <div class="auth-container">
                     <h2 style="text-align: center; margin-bottom: 2rem; color: #667eea;">Welcome to EventFlow Pro</h2>
                     
                     <!-- Login Form -->
                     <div id="login-form" class="auth-form">
                         <h3 style="text-align: center; margin-bottom: 1rem;">Login to Your Account</h3>
-                        <div id="auth-message"></div>
                         <div class="form-group">
-                            <label for="event-capacity">Max Attendees</label>
-                            <input type="number" id="event-capacity" placeholder="100" min="1">
-                        </div>
-                        <button class="btn btn-primary" onclick="createEvent()">🎉 Create Event</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Other Views (placeholder content) -->
-            <div id="events-view" class="view">
-                <header class="header">
-                    <h2>All Events</h2>
-                    <div class="header-actions">
-                        <button class="btn btn-primary" onclick="switchView('create-event')">➕ Create Event</button>
-                    </div>
-                </header>
-                <div class="widget">
-                    <div class="event-list" id="all-events-list">
-                        <div class="loading">Loading events</div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="attendees-view" class="view">
-                <header class="header">
-                    <h2>Attendee Management</h2>
-                </header>
-                <div class="widget">
-                    <p style="padding: 2rem; text-align: center; color: #666;">Attendee management interface would be displayed here.</p>
-                </div>
-            </div>
-
-            <div id="tickets-view" class="view">
-                <header class="header">
-                    <h2>Ticket Management</h2>
-                </header>
-                <div class="widget">
-                    <p style="padding: 2rem; text-align: center; color: #666;">Ticket management interface would be displayed here.</p>
-                </div>
-            </div>
-
-            <div id="analytics-view" class="view">
-                <header class="header">
-                    <h2>Analytics Dashboard</h2>
-                </header>
-                <div class="widget">
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-icon" style="background: rgba(76, 175, 80, 0.1); color: #4CAF50;">📈</div>
-                            <div class="stat-value" id="analytics-events">0</div>
-                            <div class="stat-label">Total Events</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon" style="background: rgba(33, 150, 243, 0.1); color: #2196F3;">👥</div>
-                            <div class="stat-value" id="analytics-users">0</div>
-                            <div class="stat-label">Registered Users</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="revenue-view" class="view">
-                <header class="header">
-                    <h2>Revenue Management</h2>
-                </header>
-                <div class="widget">
-                    <p style="padding: 2rem; text-align: center; color: #666;">Revenue tracking and financial reports would be displayed here.</p>
-                </div>
-            </div>
-
-            <div id="communications-view" class="view">
-                <header class="header">
-                    <h2>Communications</h2>
-                </header>
-                <div class="widget">
-                    <p style="padding: 2rem; text-align: center; color: #666;">Email campaigns and messaging interface would be displayed here.</p>
-                </div>
-            </div>
-
-            <div id="venues-view" class="view">
-                <header class="header">
-                    <h2>Venue Management</h2>
-                </header>
-                <div class="widget">
-                    <p style="padding: 2rem; text-align: center; color: #666;">Venue booking and management interface would be displayed here.</p>
-                </div>
-            </div>
-
-            <div id="settings-view" class="view">
-                <header class="header">
-                    <h2>Settings</h2>
-                </header>
-                <div class="widget">
-                    <div class="auth-form">
-                        <h3>Account Settings</h3>
-                        <div class="form-group">
-                            <label>Current User</label>
-                            <input type="text" id="settings-user" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label>Theme</label>
-                            <select onchange="changeTheme(this.value)">
-                                <option value="default">Default</option>
-                                <option value="dark">Dark Mode</option>
-                                <option value="light">Light Mode</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="notifications-view" class="view">
-                <header class="header">
-                    <h2>Notifications</h2>
-                </header>
-                <div class="widget">
-                    <div class="event-list">
-                        <div class="event-item">
-                            <div class="event-details">
-                                <h4>🎉 Welcome to EventFlow Pro!</h4>
-                                <p>Thank you for joining us. Start by creating your first event.</p>
-                            </div>
-                        </div>
-                        <div class="event-item">
-                            <div class="event-details">
-                                <h4>💡 Pro Tip</h4>
-                                <p>Use the dashboard to get a quick overview of all your events and registrations.</p>
-                            </div>
-                        </div>
-                        <div class="event-item">
-                            <div class="event-details">
-                                <h4>📊 Analytics Available</h4>
-                                <p>Check out the analytics section to see detailed reports about your events.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <script>
-        // App State Management - Global Variables
-        let currentUser = null;
-        let userEvents = [];
-        let userRegistrations = [];
-        let isAuthenticated = false;
-
-        // Utility Functions
-        function log(message) {
-            console.log(`[EventFlow Pro] ${message}`);
-        }
-
-        function showMessage(containerId, message, type = 'success') {
-            const container = document.getElementById(containerId);
-            if (container) {
-                container.innerHTML = `<div class="${type}-message">${message}</div>`;
-                setTimeout(() => {
-                    container.innerHTML = '';
-                }, 5000);
-            }
-        }
-
-        function validateEmail(email) {
-            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return re.test(email);
-        }
-
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-            });
-        }
-
-        // Navigation Functions
-        function switchView(viewName) {
-            try {
-                log(`Switching to view: ${viewName}`);
-                
-                // Check authentication for protected views
-                if (!isAuthenticated && viewName !== 'auth') {
-                    showMessage('auth-message', 'Please login first to access this feature', 'error');
-                    switchView('auth');
-                    return;
-                }
-
-                // Hide all views
-                const views = document.querySelectorAll('.view');
-                views.forEach(view => {
-                    view.classList.remove('active');
-                });
-
-                // Show selected view
-                const targetView = document.getElementById(`${viewName}-view`);
-                if (targetView) {
-                    targetView.classList.add('active');
-                    
-                    // Update navigation
-                    document.querySelectorAll('.nav-item').forEach(nav => {
-                        nav.classList.remove('active');
-                    });
-                    
-                    const activeNav = document.querySelector(`[data-view="${viewName}"]`);
-                    if (activeNav) {
-                        activeNav.classList.add('active');
-                    }
-
-                    // Load view-specific data
-                    loadViewData(viewName);
-                } else {
-                    log(`Error: View ${viewName} not found`);
-                }
-            } catch (error) {
-                log(`Error switching view: ${error.message}`);
-            }
-        }
-
-        function loadViewData(viewName) {
-            switch (viewName) {
-                case 'dashboard':
-                    updateDashboardStats();
-                    updateUserEvents();
-                    updateMyRegistrations();
-                    break;
-                case 'events':
-                    updateAllEventsList();
-                    break;
-                case 'analytics':
-                    updateAnalytics();
-                    break;
-                case 'settings':
-                    updateSettings();
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        function toggleMobileMenu() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('open');
-        }
-
-        // Authentication Functions
-        function showLogin() {
-            document.getElementById('login-form').style.display = 'flex';
-            document.getElementById('signup-form').style.display = 'none';
-        }
-
-        function showSignup() {
-            document.getElementById('login-form').style.display = 'none';
-            document.getElementById('signup-form').style.display = 'flex';
-        }
-
-        function handleLogin() {
-            try {
-                const attendees = parseInt(document.getElementById('login-attendees').value) || 100;
-                const email = document.getElementById('login-email').value.trim();
-                const password = document.getElementById('login-password').value.trim();
-
-                if (!email || !password) {
-                    showMessage('auth-message', 'Please fill in all fields', 'error');
-                    return;
-                }
-
-                if (!validateEmail(email)) {
-                    showMessage('auth-message', 'Please enter a valid email address', 'error');
-                    return;
-                }
-
-                if (password.length < 6) {
-                    showMessage('auth-message', 'Password must be at least 6 characters long', 'error');
-                    return;
-                }
-
-                // Simulate authentication
-                currentUser = {
-                    email: email,
-                    name: email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1),
-                    maxAttendees: attendees
-                };
-                
-                isAuthenticated = true;
-                document.getElementById('user-name').textContent = currentUser.name;
-                
-                // Clear form
-                document.getElementById('login-attendees').value = '100';
-                document.getElementById('login-email').value = '';
-                document.getElementById('login-password').value = '';
-                
-                showMessage('auth-message', 'Login successful! Redirecting...', 'success');
-                
-                setTimeout(() => {
-                    switchView('dashboard');
-                }, 1000);
-
-                log(`User logged in: ${currentUser.name} (Max Attendees: ${attendees})`);
-                
-            } catch (error) {
-                log(`Login error: ${error.message}`);
-                showMessage('auth-message', 'An error occurred during login', 'error');
-            }
-        }
-
-        function handleSignup() {
-            try {
-                const attendees = parseInt(document.getElementById('signup-attendees').value) || 100;
-                const name = document.getElementById('signup-name').value.trim();
-                const email = document.getElementById('signup-email').value.trim();
-                const password = document.getElementById('signup-password').value.trim();
-
-                if (!name || !email || !password) {
-                    showMessage('signup-message', 'Please fill in all fields', 'error');
-                    return;
-                }
-
-                if (!validateEmail(email)) {
-                    showMessage('signup-message', 'Please enter a valid email address', 'error');
-                    return;
-                }
-
-                if (password.length < 6) {
-                    showMessage('signup-message', 'Password must be at least 6 characters long', 'error');
-                    return;
-                }
-
-                // Create account
-                currentUser = {
-                    email: email,
-                    name: name,
-                    maxAttendees: attendees
-                };
-                
-                isAuthenticated = true;
-                document.getElementById('user-name').textContent = currentUser.name;
-                
-                // Clear form
-                document.getElementById('signup-attendees').value = '100';
-                document.getElementById('signup-name').value = '';
-                document.getElementById('signup-email').value = '';
-                document.getElementById('signup-password').value = '';
-                
-                showMessage('signup-message', 'Account created successfully! Redirecting...', 'success');
-                
-                setTimeout(() => {
-                    switchView('dashboard');
-                }, 1000);
-
-                log(`User signed up: ${currentUser.name} (Max Attendees: ${attendees})`);
-                
-            } catch (error) {
-                log(`Signup error: ${error.message}`);
-                showMessage('signup-message', 'An error occurred during signup', 'error');
-            }
-        }
-
-        function handleLogout() {
-            if (confirm('Are you sure you want to logout?')) {
-                currentUser = null;
-                isAuthenticated = false;
-                userEvents = [];
-                userRegistrations = [];
-                
-                // Clear all forms
-                document.querySelectorAll('input').forEach(input => {
-                    if (input.type === 'number' && (input.id.includes('attendees') || input.id === 'event-capacity')) {
-                        input.value = '100'; // Reset attendee fields to default
-                    } else if (input.type !== 'date') {
-                        input.value = '';
-                    }
-                });
-                document.querySelectorAll('textarea').forEach(textarea => {
-                    textarea.value = '';
-                });
-                
-                switchView('auth');
-                showLogin();
-                
-                log('User logged out');
-            }
-        }
-
-        // Event Management Functions
-        function createEvent() {
-            try {
-                const name = document.getElementById('event-name').value.trim();
-                const description = document.getElementById('event-description').value.trim();
-                const date = document.getElementById('event-date').value;
-                const location = document.getElementById('event-location').value.trim();
-                const price = parseFloat(document.getElementById('event-price').value) || 0;
-                const capacity = parseInt(document.getElementById('event-capacity').value) || 100;
-
-                if (!name || !date || !location) {
-                    showMessage('create-event-message', 'Please fill in all required fields (Name, Date, Location)', 'error');
-                    return;
-                }
-
-                const eventDate = new Date(date);
-                const today = new Date();
-                
-                if (eventDate < today) {
-                    showMessage('create-event-message', 'Event date cannot be in the past', 'error');
-                    return;
-                }
-
-                const newEvent = {
-                    id: Date.now(),
-                    name: name,
-                    description: description,
-                    date: date,
-                    location: location,
-                    price: price,
-                    capacity: capacity,
-                    attendees: 0,
-                    status: 'upcoming',
-                    createdBy: currentUser.email,
-                    createdAt: new Date().toISOString()
-                };
-
-                userEvents.push(newEvent);
-                
-                // Clear form
-                document.querySelectorAll('#create-event-view input, #create-event-view textarea').forEach(field => {
-                    field.value = '';
-                });
-
-                showMessage('create-event-message', `🎉 Event "${name}" created successfully!`, 'success');
-                
-                updateDashboardStats();
-                updateUserEvents();
-                
-                log(`Event created: ${name}`);
-                
-            } catch (error) {
-                log(`Create event error: ${error.message}`);
-                showMessage('create-event-message', 'An error occurred while creating the event', 'error');
-            }
-        }
-
-        function registerForEvent(eventName, price) {
-            try {
-                if (!isAuthenticated) {
-                    showMessage('auth-message', 'Please login first to register for events', 'error');
-                    switchView('auth');
-                    return;
-                }
-
-                // Check if already registered
-                const existingRegistration = userRegistrations.find(reg => reg.eventName === eventName);
-                if (existingRegistration) {
-                    alert(`You are already registered for "${eventName}"`);
-                    return;
-                }
-
-                const registration = {
-                    id: Date.now(),
-                    eventName: eventName,
-                    price: price,
-                    registeredAt: new Date().toLocaleDateString(),
-                    registeredBy: currentUser.email,
-                    status: 'confirmed'
-                };
-
-                userRegistrations.push(registration);
-                updateMyRegistrations();
-                updateDashboardStats();
-                
-                alert(`✅ Successfully registered for "${eventName}"! Check "My Registrations" section.`);
-                log(`User registered for event: ${eventName}`);
-                
-            } catch (error) {
-                log(`Registration error: ${error.message}`);
-                alert('An error occurred during registration');
-            }
-        }
-
-        // UI Update Functions
-        function updateDashboardStats() {
-            try {
-                const activeEventsEl = document.getElementById('active-events');
-                const totalAttendeesEl = document.getElementById('total-attendees');
-                const revenueEl = document.getElementById('revenue-amount');
-                
-                if (activeEventsEl) activeEventsEl.textContent = userEvents.length;
-                if (totalAttendeesEl) totalAttendeesEl.textContent = userRegistrations.length;
-                
-                if (revenueEl) {
-                    const totalRevenue = userRegistrations.reduce((sum, reg) => sum + reg.price, 0);
-                    revenueEl.textContent = `${totalRevenue}`;
-                }
-                
-                log('Dashboard stats updated');
-            } catch (error) {
-                log(`Update dashboard stats error: ${error.message}`);
-            }
-        }
-
-        function updateUserEvents() {
-            try {
-                const container = document.getElementById('user-events');
-                if (!container) return;
-                
-                if (userEvents.length === 0) {
-                    container.innerHTML = `
-                        <p style="text-align: center; color: #666; padding: 2rem;">
-                            No events created yet. <a href="#" onclick="switchView('create-event')" style="color: #667eea;">Create your first event!</a>
-                        </p>
-                    `;
-                    return;
-                }
-
-                container.innerHTML = userEvents.map(event => `
-                    <div class="event-item ${event.status}">
-                        <div class="event-details">
-                            <h4>${event.name}</h4>
-                            <p>📍 ${event.location} • 🕐 ${formatDate(event.date)} • 👥 ${event.attendees}/${event.capacity} • 💰 ${event.price}</p>
-                            ${event.description ? `<p style="margin-top: 0.5rem; font-style: italic;">${event.description}</p>` : ''}
-                        </div>
-                        <div class="event-actions">
-                            <button class="btn btn-secondary btn-small" onclick="manageEvent(${event.id})">Manage</button>
-                        </div>
-                    </div>
-                `).join('');
-                
-                log('User events updated');
-            } catch (error) {
-                log(`Update user events error: ${error.message}`);
-            }
-        }
-
-        function updateMyRegistrations() {
-            try {
-                const container = document.getElementById('my-registrations');
-                if (!container) return;
-                
-                if (userRegistrations.length === 0) {
-                    container.innerHTML = `
-                        <p style="text-align: center; color: #666; padding: 2rem;">
-                            No event registrations yet. Register for events above!
-                        </p>
-                    `;
-                    return;
-                }
-
-                container.innerHTML = `
-                    <div class="event-list">
-                        ${userRegistrations.map(reg => `
-                            <div class="event-item upcoming">
-                                <div class="event-details">
-                                    <h4>${reg.eventName}</h4>
-                                    <p>🎫 Confirmed • 📅 Registered: ${reg.registeredAt} • 💰 ${reg.price}</p>
-                                </div>
-                                <span class="event-status" style="color: #4CAF50; font-weight: 600;">Registered</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-                
-                log('User registrations updated');
-            } catch (error) {
-                log(`Update registrations error: ${error.message}`);
-            }
-        }
-
-        function updateAllEventsList() {
-            try {
-                const container = document.getElementById('all-events-list');
-                if (!container) return;
-                
-                setTimeout(() => {
-                    container.innerHTML = userEvents.length > 0 ? 
-                        userEvents.map(event => `
-                            <div class="event-item ${event.status}">
-                                <div class="event-details">
-                                    <h4>${event.name}</h4>
-                                    <p>📍 ${event.location} • 🕐 ${formatDate(event.date)} • 💰 ${event.price}</p>
-                                    ${event.description ? `<p style="margin-top: 0.5rem;">${event.description}</p>` : ''}
-                                </div>
-                                <div class="event-actions">
-                                    <button class="btn btn-primary btn-small" onclick="manageEvent(${event.id})">Manage</button>
-                                </div>
-                            </div>
-                        `).join('') :
-                        '<p style="text-align: center; color: #666; padding: 2rem;">No events found. Create your first event!</p>';
-                }, 500);
-            } catch (error) {
-                log(`Update all events error: ${error.message}`);
-            }
-        }
-
-        function updateAnalytics() {
-            try {
-                const eventsEl = document.getElementById('analytics-events');
-                const usersEl = document.getElementById('analytics-users');
-                
-                if (eventsEl) eventsEl.textContent = userEvents.length;
-                if (usersEl) usersEl.textContent = userRegistrations.length;
-                
-                log('Analytics updated');
-            } catch (error) {
-                log(`Update analytics error: ${error.message}`);
-            }
-        }
-
-        function updateSettings() {
-            try {
-                const settingsUser = document.getElementById('settings-user');
-                if (settingsUser && currentUser) {
-                    settingsUser.value = currentUser.name + ' (' + currentUser.email + ')';
-                }
-            } catch (error) {
-                log(`Update settings error: ${error.message}`);
-            }
-        }
-
-        // Utility Functions
-        function manageEvent(eventId) {
-            const event = userEvents.find(e => e.id === eventId);
-            if (event) {
-                alert(`Managing event: ${event.name}\n\nFeature coming soon!`);
-            }
-        }
-
-        function showTip() {
-            alert('💡 Pro Tips:\n\n• Use the sidebar to navigate between sections\n• Create events and track registrations\n• Check analytics for insights\n• Mobile responsive design works on all devices');
-        }
-
-        function changeTheme(theme) {
-            // Theme changing functionality would be implemented here
-            alert(`Theme changed to: ${theme}`);
-        }
-
-        // Navigation Event Listeners
-        function initializeNavigation() {
-            try {
-                document.querySelectorAll('.nav-item').forEach(item => {
-                    item.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        const viewName = this.dataset.view;
-                        if (viewName) {
-                            switchView(viewName);
-                        }
-                    });
-                });
-                
-                log('Navigation initialized');
-            } catch (error) {
-                log(`Navigation initialization error: ${error.message}`);
-            }
-        }
-
-        // Form Event Listeners
-        function initializeFormHandlers() {
-            try {
-                // Enter key handlers for login form
-                const loginAttendees = document.getElementById('login-attendees');
-                const loginEmail = document.getElementById('login-email');
-                const loginPassword = document.getElementById('login-password');
-                
-                if (loginAttendees && loginEmail && loginPassword) {
-                    [loginAttendees, loginEmail, loginPassword].forEach(input => {
-                        input.addEventListener('keypress', function(e) {
-                            if (e.key === 'Enter') {
-                                handleLogin();
-                            }
-                        });
-                    });
-                }
-
-                // Enter key handlers for signup form
-                const signupInputs = document.querySelectorAll('#signup-form input');
-                signupInputs.forEach(input => {
-                    input.addEventListener('keypress', function(e) {
-                        if (e.key === 'Enter') {
-                            handleSignup();
-                        }
-                    });
-                });
-
-                log('Form handlers initialized');
-            } catch (error) {
-                log(`Form handlers initialization error: ${error.message}`);
-            }
-        }
-
-        // Initialize App
-        function initializeApp() {
-            try {
-                log('Initializing EventFlow Pro...');
-                
-                // Set minimum date for event creation to today
-                const today = new Date().toISOString().split('T')[0];
-                const eventDateInput = document.getElementById('event-date');
-                if (eventDateInput) {
-                    eventDateInput.setAttribute('min', today);
-                }
-                
-                // Initialize navigation
-                initializeNavigation();
-                
-                // Initialize form handlers
-                initializeFormHandlers();
-                
-                // Show auth view by default
-                switchView('auth');
-                showLogin();
-                
-                // Add interactive effects
-                document.querySelectorAll('.stat-card').forEach(card => {
-                    card.addEventListener('mouseenter', function() {
-                        this.style.transform = 'translateY(-5px) scale(1.02)';
-                    });
-                    
-                    card.addEventListener('mouseleave', function() {
-                        this.style.transform = 'translateY(0) scale(1)';
-                    });
-                });
-                
-                log('🎉 EventFlow Pro initialized successfully!');
-                
-            } catch (error) {
-                log(`Initialization error: ${error.message}`);
-                console.error('EventFlow Pro initialization failed:', error);
-            }
-        }
-
-        // Error Handling
-        window.addEventListener('error', function(e) {
-            log(`Global error: ${e.message}`);
-            console.error('EventFlow Pro Error:', e);
-        });
-
-        // Start the application when DOM is loaded
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeApp);
-        } else {
-            initializeApp();
-        }
-
-        // Additional startup when window loads
-        window.addEventListener('load', function() {
-            log('Window loaded - EventFlow Pro ready!');
-            
-            // Demo tip after a delay
-            setTimeout(() => {
-                log('💡 Pro tip: Try creating an account with any email/password combination to explore the dashboard!');
-            }, 3000);
-        });
-    </script>
-</body>
-</html>
                             <label for="login-email">Email</label>
                             <input type="email" id="login-email" placeholder="Enter your email" required>
                         </div>
@@ -1369,7 +544,7 @@
                             <label for="login-password">Password</label>
                             <input type="password" id="login-password" placeholder="Enter your password" required>
                         </div>
-                        <button class="btn btn-primary" type="button" onclick="handleLogin()">🔐 Login</button>
+                        <button class="btn btn-primary" onclick="handleLogin()">🔐 Login</button>
                         <div class="auth-toggle">
                             Don't have an account? <a href="#" onclick="showSignup()">Sign up here</a>
                         </div>
@@ -1378,11 +553,6 @@
                     <!-- Signup Form -->
                     <div id="signup-form" class="auth-form" style="display: none;">
                         <h3 style="text-align: center; margin-bottom: 1rem;">Create New Account</h3>
-                        <div id="signup-message"></div>
-                        <div class="form-group">
-                            <label for="signup-attendees">Max Attendees</label>
-                            <input type="number" id="signup-attendees" placeholder="100" min="1" value="100">
-                        </div>
                         <div class="form-group">
                             <label for="signup-name">Full Name</label>
                             <input type="text" id="signup-name" placeholder="Enter your full name" required>
@@ -1395,7 +565,7 @@
                             <label for="signup-password">Password</label>
                             <input type="password" id="signup-password" placeholder="Create a password" required>
                         </div>
-                        <button class="btn btn-primary" type="button" onclick="handleSignup()">✅ Create Account</button>
+                        <button class="btn btn-primary" onclick="handleSignup()">✅ Create Account</button>
                         <div class="auth-toggle">
                             Already have an account? <a href="#" onclick="showLogin()">Login here</a>
                         </div>
@@ -1438,7 +608,7 @@
                         <div class="stat-icon" style="background: rgba(255, 152, 0, 0.1); color: #FF9800;">
                             💰
                         </div>
-                        <div class="stat-value" id="revenue-amount">$0</div>
+                        <div class="stat-value">$0</div>
                         <div class="stat-label">Monthly Revenue</div>
                     </div>
                     <div class="stat-card">
@@ -1562,7 +732,7 @@
                             <div class="action-icon">⚙️</div>
                             <h4>Settings</h4>
                         </div>
-                        <div class="quick-action" onclick="showTip()">
+                        <div class="quick-action" onclick="alert('💡 Tip: Use the navigation sidebar to access all features!')">
                             <div class="action-icon">💡</div>
                             <h4>Help & Tips</h4>
                         </div>
@@ -1580,7 +750,9 @@
                 </header>
 
                 <div class="widget">
-                    <div id="create-event-message"></div>
+                    <div id="create-event-success" class="success-message" style="display: none;">
+                        ✅ Event created successfully! Check your dashboard to see it listed.
+                    </div>
                     
                     <div class="auth-form">
                         <div class="form-group">
@@ -1601,6 +773,372 @@
                         </div>
                         <div class="form-group">
                             <label for="event-price">Ticket Price ($)</label>
-                            <input type="number" id="event-price" placeholder="0" min="0" step="0.01">
+                            <input type="number" id="event-price" placeholder="0" min="0">
                         </div>
                         <div class="form-group">
+                            <label for="event-capacity">Max Attendees</label>
+                            <input type="number" id="event-capacity" placeholder="100" min="1">
+                        </div>
+                        <button class="btn btn-primary" onclick="createEvent()">🎉 Create Event</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Other Views (placeholder content) -->
+            <div id="events-view" class="view">
+                <header class="header">
+                    <h2>All Events</h2>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" onclick="switchView('create-event')">➕ Create Event</button>
+                    </div>
+                </header>
+                <div class="widget">
+                    <p style="padding: 2rem; text-align: center; color: #666;">Events management interface would be displayed here.</p>
+                </div>
+            </div>
+
+            <div id="attendees-view" class="view">
+                <header class="header">
+                    <h2>Attendee Management</h2>
+                </header>
+                <div class="widget">
+                    <p style="padding: 2rem; text-align: center; color: #666;">Attendee management interface would be displayed here.</p>
+                </div>
+            </div>
+
+            <div id="tickets-view" class="view">
+                <header class="header">
+                    <h2>Ticket Management</h2>
+                </header>
+                <div class="widget">
+                    <p style="padding: 2rem; text-align: center; color: #666;">Ticket management interface would be displayed here.</p>
+                </div>
+            </div>
+
+            <div id="analytics-view" class="view">
+                <header class="header">
+                    <h2>Analytics Dashboard</h2>
+                </header>
+                <div class="widget">
+                    <p style="padding: 2rem; text-align: center; color: #666;">Analytics and reporting interface would be displayed here.</p>
+                </div>
+            </div>
+
+            <div id="revenue-view" class="view">
+                <header class="header">
+                    <h2>Revenue Management</h2>
+                </header>
+                <div class="widget">
+                    <p style="padding: 2rem; text-align: center; color: #666;">Revenue tracking and financial reports would be displayed here.</p>
+                </div>
+            </div>
+
+            <div id="communications-view" class="view">
+                <header class="header">
+                    <h2>Communications</h2>
+                </header>
+                <div class="widget">
+                    <p style="padding: 2rem; text-align: center; color: #666;">Email campaigns and messaging interface would be displayed here.</p>
+                </div>
+            </div>
+
+            <div id="venues-view" class="view">
+                <header class="header">
+                    <h2>Venue Management</h2>
+                </header>
+                <div class="widget">
+                    <p style="padding: 2rem; text-align: center; color: #666;">Venue booking and management interface would be displayed here.</p>
+                </div>
+            </div>
+
+            <div id="settings-view" class="view">
+                <header class="header">
+                    <h2>Settings</h2>
+                </header>
+                <div class="widget">
+                    <p style="padding: 2rem; text-align: center; color: #666;">Account settings and preferences would be displayed here.</p>
+                </div>
+            </div>
+
+            <div id="notifications-view" class="view">
+                <header class="header">
+                    <h2>Notifications</h2>
+                </header>
+                <div class="widget">
+                    <p style="padding: 2rem; text-align: center; color: #666;">System notifications and alerts would be displayed here.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // App State Management
+        let currentUser = null;
+        let userEvents = [];
+        let userRegistrations = [];
+
+        // Navigation Functions
+        function switchView(viewName) {
+            // Hide all views
+            document.querySelectorAll('.view').forEach(view => {
+                view.classList.remove('active');
+            });
+
+            // Show selected view
+            document.getElementById(`${viewName}-view`).classList.add('active');
+
+            // Update navigation
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            document.querySelector(`[data-view="${viewName}"]`).classList.add('active');
+        }
+
+        // Authentication Functions
+        function showLogin() {
+            document.getElementById('login-form').style.display = 'flex';
+            document.getElementById('signup-form').style.display = 'none';
+        }
+
+        function showSignup() {
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('signup-form').style.display = 'flex';
+        }
+
+        function handleLogin() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            if (!email || !password) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            // Simple validation (in real app, this would be server-side)
+            if (email.includes('@') && password.length >= 6) {
+                currentUser = {
+                    email: email,
+                    name: email.split('@')[0]
+                };
+                
+                document.getElementById('user-name').textContent = currentUser.name;
+                switchView('dashboard');
+                updateDashboardStats();
+                alert('✅ Successfully logged in!');
+            } else {
+                alert('❌ Invalid email or password (password must be at least 6 characters)');
+            }
+        }
+
+        function handleSignup() {
+            const name = document.getElementById('signup-name').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+
+            if (!name || !email || !password) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            if (!email.includes('@') || password.length < 6) {
+                alert('❌ Please enter a valid email and password (minimum 6 characters)');
+                return;
+            }
+
+            // Create account
+            currentUser = {
+                email: email,
+                name: name
+            };
+            
+            document.getElementById('user-name').textContent = currentUser.name;
+            switchView('dashboard');
+            updateDashboardStats();
+            alert('✅ Account created successfully! Welcome to EventFlow Pro!');
+        }
+
+        function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                currentUser = null;
+                userEvents = [];
+                userRegistrations = [];
+                switchView('auth');
+                // Clear forms
+                document.querySelectorAll('input').forEach(input => input.value = '');
+                document.querySelectorAll('textarea').forEach(textarea => textarea.value = '');
+                showLogin();
+            }
+        }
+
+        // Event Management Functions
+        function createEvent() {
+            const name = document.getElementById('event-name').value;
+            const description = document.getElementById('event-description').value;
+            const date = document.getElementById('event-date').value;
+            const location = document.getElementById('event-location').value;
+            const price = document.getElementById('event-price').value || '0';
+            const capacity = document.getElementById('event-capacity').value || '100';
+
+            if (!name || !date || !location) {
+                alert('Please fill in all required fields (Name, Date, Location)');
+                return;
+            }
+
+            const newEvent = {
+                id: Date.now(),
+                name: name,
+                description: description,
+                date: date,
+                location: location,
+                price: parseFloat(price),
+                capacity: parseInt(capacity),
+                attendees: 0,
+                status: 'upcoming'
+            };
+
+            userEvents.push(newEvent);
+            
+            // Clear form
+            document.querySelectorAll('#create-event-view input, #create-event-view textarea').forEach(field => {
+                field.value = '';
+            });
+
+            // Show success message
+            document.getElementById('create-event-success').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('create-event-success').style.display = 'none';
+            }, 3000);
+
+            updateDashboardStats();
+            updateUserEvents();
+            
+            alert('🎉 Event created successfully!');
+        }
+
+        function registerForEvent(eventName, price) {
+            if (!currentUser) {
+                alert('Please login first to register for events');
+                return;
+            }
+
+            const registration = {
+                id: Date.now(),
+                eventName: eventName,
+                price: price,
+                registeredAt: new Date().toLocaleDateString(),
+                status: 'confirmed'
+            };
+
+            userRegistrations.push(registration);
+            updateMyRegistrations();
+            updateDashboardStats();
+            
+            alert(`✅ Successfully registered for ${eventName}! Check "My Registrations" section.`);
+        }
+
+        // UI Update Functions
+        function updateDashboardStats() {
+            document.getElementById('active-events').textContent = userEvents.length;
+            document.getElementById('total-attendees').textContent = userRegistrations.length;
+        }
+
+        function updateUserEvents() {
+            const container = document.getElementById('user-events');
+            
+            if (userEvents.length === 0) {
+                container.innerHTML = `
+                    <p style="text-align: center; color: #666; padding: 2rem;">
+                        No events created yet. <a href="#" onclick="switchView('create-event')" style="color: #667eea;">Create your first event!</a>
+                    </p>
+                `;
+                return;
+            }
+
+            container.innerHTML = userEvents.map(event => `
+                <div class="event-item ${event.status}">
+                    <div class="event-details">
+                        <h4>${event.name}</h4>
+                        <p>📍 ${event.location} • 🕐 ${new Date(event.date).toLocaleDateString()} • 👥 ${event.attendees}/${event.capacity} • 💰 ${event.price}</p>
+                        ${event.description ? `<p style="margin-top: 0.5rem; font-style: italic;">${event.description}</p>` : ''}
+                    </div>
+                    <div class="event-actions">
+                        <button class="btn btn-secondary btn-small" onclick="alert('Event management features coming soon!')">Manage</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateMyRegistrations() {
+            const container = document.getElementById('my-registrations');
+            
+            if (userRegistrations.length === 0) {
+                container.innerHTML = `
+                    <p style="text-align: center; color: #666; padding: 2rem;">
+                        No event registrations yet. Register for events above!
+                    </p>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="event-list">
+                    ${userRegistrations.map(reg => `
+                        <div class="event-item upcoming">
+                            <div class="event-details">
+                                <h4>${reg.eventName}</h4>
+                                <p>🎫 Confirmed • 📅 Registered: ${reg.registeredAt} • 💰 ${reg.price}</p>
+                            </div>
+                            <span class="event-status status-upcoming">Registered</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Navigation Event Listeners
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const viewName = this.dataset.view;
+                
+                if (!currentUser && viewName !== 'auth') {
+                    alert('Please login first to access this feature');
+                    return;
+                }
+                
+                switchView(viewName);
+            });
+        });
+
+        // Interactive Features
+        document.querySelectorAll('.stat-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-5px) scale(1.02)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+
+        // Initialize App
+        function initializeApp() {
+            // Show auth view by default
+            switchView('auth');
+            showLogin();
+            
+            // Set minimum date for event creation to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('event-date').setAttribute('min', today);
+            
+            console.log('🎉 EventFlow Pro initialized successfully!');
+        }
+
+        // Start the application
+        window.addEventListener('load', initializeApp);
+
+        // Demo data and interactions
+        setTimeout(() => {
+            console.log('💡 Pro tip: Try creating an account with any email/password combination to explore the dashboard!');
+        }, 2000);
+    </script>
+</body>
+</html>
