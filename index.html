@@ -867,6 +867,7 @@
 
         function handleLogin() {
             try {
+                const attendees = parseInt(document.getElementById('login-attendees').value) || 100;
                 const email = document.getElementById('login-email').value.trim();
                 const password = document.getElementById('login-password').value.trim();
 
@@ -888,13 +889,15 @@
                 // Simulate authentication
                 currentUser = {
                     email: email,
-                    name: email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1)
+                    name: email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1),
+                    maxAttendees: attendees
                 };
                 
                 isAuthenticated = true;
                 document.getElementById('user-name').textContent = currentUser.name;
                 
                 // Clear form
+                document.getElementById('login-attendees').value = '100';
                 document.getElementById('login-email').value = '';
                 document.getElementById('login-password').value = '';
                 
@@ -904,7 +907,7 @@
                     switchView('dashboard');
                 }, 1000);
 
-                log(`User logged in: ${currentUser.name}`);
+                log(`User logged in: ${currentUser.name} (Max Attendees: ${attendees})`);
                 
             } catch (error) {
                 log(`Login error: ${error.message}`);
@@ -914,6 +917,7 @@
 
         function handleSignup() {
             try {
+                const attendees = parseInt(document.getElementById('signup-attendees').value) || 100;
                 const name = document.getElementById('signup-name').value.trim();
                 const email = document.getElementById('signup-email').value.trim();
                 const password = document.getElementById('signup-password').value.trim();
@@ -936,13 +940,15 @@
                 // Create account
                 currentUser = {
                     email: email,
-                    name: name
+                    name: name,
+                    maxAttendees: attendees
                 };
                 
                 isAuthenticated = true;
                 document.getElementById('user-name').textContent = currentUser.name;
                 
                 // Clear form
+                document.getElementById('signup-attendees').value = '100';
                 document.getElementById('signup-name').value = '';
                 document.getElementById('signup-email').value = '';
                 document.getElementById('signup-password').value = '';
@@ -953,7 +959,7 @@
                     switchView('dashboard');
                 }, 1000);
 
-                log(`User signed up: ${currentUser.name}`);
+                log(`User signed up: ${currentUser.name} (Max Attendees: ${attendees})`);
                 
             } catch (error) {
                 log(`Signup error: ${error.message}`);
@@ -970,7 +976,11 @@
                 
                 // Clear all forms
                 document.querySelectorAll('input').forEach(input => {
-                    if (input.type !== 'date') input.value = '';
+                    if (input.type === 'number' && (input.id.includes('attendees') || input.id === 'event-capacity')) {
+                        input.value = '100'; // Reset attendee fields to default
+                    } else if (input.type !== 'date') {
+                        input.value = '';
+                    }
                 });
                 document.querySelectorAll('textarea').forEach(textarea => {
                     textarea.value = '';
@@ -1256,11 +1266,12 @@
         function initializeFormHandlers() {
             try {
                 // Enter key handlers for login form
+                const loginAttendees = document.getElementById('login-attendees');
                 const loginEmail = document.getElementById('login-email');
                 const loginPassword = document.getElementById('login-password');
                 
-                if (loginEmail && loginPassword) {
-                    [loginEmail, loginPassword].forEach(input => {
+                if (loginAttendees && loginEmail && loginPassword) {
+                    [loginAttendees, loginEmail, loginPassword].forEach(input => {
                         input.addEventListener('keypress', function(e) {
                             if (e.key === 'Enter') {
                                 handleLogin();
@@ -1368,6 +1379,10 @@
                     <div id="signup-form" class="auth-form" style="display: none;">
                         <h3 style="text-align: center; margin-bottom: 1rem;">Create New Account</h3>
                         <div id="signup-message"></div>
+                        <div class="form-group">
+                            <label for="signup-attendees">Max Attendees</label>
+                            <input type="number" id="signup-attendees" placeholder="100" min="1" value="100">
+                        </div>
                         <div class="form-group">
                             <label for="signup-name">Full Name</label>
                             <input type="text" id="signup-name" placeholder="Enter your full name" required>
