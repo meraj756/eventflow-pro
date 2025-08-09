@@ -1,749 +1,761 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EventFlow Pro - Smart Event Management</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+import React, { useState, useEffect } from 'react';
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: #333;
-        }
+// Mock Firebase functions for MVP (we'll replace with real Firebase)
+const mockAuth = {
+  currentUser: null,
+  signInWithEmailAndPassword: (email, password) => 
+    Promise.resolve({ user: { uid: '123', email, displayName: 'Test User' } }),
+  createUserWithEmailAndPassword: (email, password) => 
+    Promise.resolve({ user: { uid: '123', email, displayName: 'New User' } }),
+  signOut: () => Promise.resolve()
+};
 
-        .container {
-            display: flex;
-            min-height: 100vh;
-        }
+const mockFirestore = {
+  collection: (name) => ({
+    add: (data) => Promise.resolve({ id: Date.now().toString(), ...data }),
+    get: () => Promise.resolve({
+      docs: [
+        { id: '1', data: () => ({ name: 'Tech Innovation Summit 2025', date: '2025-03-15', venue: 'Grand Convention Center', attendees: 450, status: 'upcoming' }) },
+        { id: '2', data: () => ({ name: 'Digital Marketing Workshop', date: '2025-08-09', venue: 'Business Plaza Hotel', attendees: 120, status: 'ongoing' }) },
+        { id: '3', data: () => ({ name: 'Annual Charity Gala', date: '2025-03-22', venue: 'Riverside Venue', attendees: 300, status: 'upcoming' }) }
+      ]
+    }),
+    doc: (id) => ({
+      get: () => Promise.resolve({ exists: true, data: () => ({ name: 'Sample Event', registered: true }) }),
+      update: (data) => Promise.resolve(),
+      set: (data) => Promise.resolve()
+    })
+  })
+};
 
-        /* Sidebar */
-        .sidebar {
-            width: 280px;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-right: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 2rem 0;
-            box-shadow: 2px 0 20px rgba(0, 0, 0, 0.1);
-        }
+function EventFlowPro() {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [currentView, setCurrentView] = useState('dashboard');
+  const [events, setEvents] = useState([]);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState('login');
+  const [stats, setStats] = useState({
+    activeEvents: 24,
+    totalAttendees: 1247,
+    monthlyRevenue: 45280,
+    successRate: 89
+  });
 
-        .logo {
-            padding: 0 2rem 2rem;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-            margin-bottom: 2rem;
-        }
+  // Load events on component mount
+  useEffect(() => {
+    loadEvents();
+  }, []);
 
-        .logo h1 {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
+  const loadEvents = async () => {
+    try {
+      const snapshot = await mockFirestore.collection('events').get();
+      const eventsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setEvents(eventsData);
+    } catch (error) {
+      console.error('Error loading events:', error);
+    }
+  };
 
-        .owner-name {
-            color: #666;
-            font-size: 0.9rem;
-            font-style: italic;
-        }
+  const handleAuth = async (email, password) => {
+    try {
+      let result;
+      if (authMode === 'login') {
+        result = await mockAuth.signInWithEmailAndPassword(email, password);
+      } else {
+        result = await mockAuth.createUserWithEmailAndPassword(email, password);
+      }
+      setCurrentUser(result.user);
+      setShowAuthModal(false);
+      alert(`${authMode === 'login' ? 'Logged in' : 'Account created'} successfully!`);
+    } catch (error) {
+      alert('Authentication failed: ' + error.message);
+    }
+  };
 
-        .nav-item {
-            display: flex;
-            align-items: center;
-            padding: 1rem 2rem;
-            color: #666;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            border-left: 3px solid transparent;
-        }
+  const handleLogout = async () => {
+    await mockAuth.signOut();
+    setCurrentUser(null);
+    alert('Logged out successfully!');
+  };
 
-        .nav-item:hover, .nav-item.active {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
-            color: #667eea;
-            border-left-color: #667eea;
-        }
+  const createEvent = async (eventData) => {
+    try {
+      const newEvent = await mockFirestore.collection('events').add({
+        ...eventData,
+        createdBy: currentUser?.uid,
+        createdAt: new Date().toISOString(),
+        attendees: 0,
+        status: 'upcoming'
+      });
+      await loadEvents();
+      alert('Event created successfully!');
+      setCurrentView('dashboard');
+    } catch (error) {
+      alert('Error creating event: ' + error.message);
+    }
+  };
 
-        .nav-icon {
-            font-size: 1.2rem;
-            margin-right: 0.75rem;
-            width: 20px;
-            text-align: center;
-        }
+  const registerForEvent = async (eventId) => {
+    if (!currentUser) {
+      setShowAuthModal(true);
+      return;
+    }
+    
+    try {
+      await mockFirestore.collection('registrations').add({
+        eventId,
+        userId: currentUser.uid,
+        registeredAt: new Date().toISOString(),
+        status: 'confirmed'
+      });
+      alert('Successfully registered for event!');
+    } catch (error) {
+      alert('Registration failed: ' + error.message);
+    }
+  };
 
-        /* Main Content */
-        .main-content {
-            flex: 1;
-            padding: 2rem;
-            overflow-y: auto;
-        }
-
-        /* Header */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            padding: 1.5rem 2rem;
-            border-radius: 20px;
-            margin-bottom: 2rem;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-        }
-
-        .header h2 {
-            color: #333;
-            font-size: 2rem;
-            font-weight: 600;
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.9);
-            color: #667eea;
-            border: 2px solid rgba(102, 126, 234, 0.3);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(102, 126, 234, 0.1);
-        }
-
-        /* Dashboard Grid */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        /* Stats Cards */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            padding: 2rem;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .stat-card .stat-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            margin-bottom: 1rem;
-        }
-
-        .stat-card .stat-value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-card .stat-label {
-            color: #666;
-            font-size: 0.9rem;
-        }
-
-        /* Widget Cards */
-        .widget {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 2rem;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-        }
-
-        .widget-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .widget-title {
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: #333;
-        }
-
-        /* Event List */
-        .event-list {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .event-item {
-            display: flex;
-            align-items: center;
-            padding: 1.5rem;
-            background: rgba(255, 255, 255, 0.7);
-            border-radius: 15px;
-            transition: all 0.3s ease;
-            border-left: 4px solid transparent;
-        }
-
-        .event-item:hover {
-            background: rgba(255, 255, 255, 0.9);
-            transform: translateX(5px);
-        }
-
-        .event-item.upcoming {
-            border-left-color: #4CAF50;
-        }
-
-        .event-item.ongoing {
-            border-left-color: #FF9800;
-        }
-
-        .event-item.completed {
-            border-left-color: #9E9E9E;
-        }
-
-        .event-details h4 {
-            color: #333;
-            margin-bottom: 0.5rem;
-        }
-
-        .event-details p {
-            color: #666;
-            font-size: 0.9rem;
-        }
-
-        .event-status {
-            margin-left: auto;
-            padding: 0.5rem 1rem;
-            border-radius: 50px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-
-        .status-upcoming {
-            background: rgba(76, 175, 80, 0.1);
-            color: #4CAF50;
-        }
-
-        .status-ongoing {
-            background: rgba(255, 152, 0, 0.1);
-            color: #FF9800;
-        }
-
-        .status-completed {
-            background: rgba(158, 158, 158, 0.1);
-            color: #9E9E9E;
-        }
-
-        /* Calendar Widget */
-        .calendar-widget {
-            text-align: center;
-        }
-
-        .calendar-date {
-            font-size: 3rem;
-            font-weight: 700;
-            color: #667eea;
-            margin-bottom: 0.5rem;
-        }
-
-        .calendar-month {
-            font-size: 1.2rem;
-            color: #666;
-            margin-bottom: 1rem;
-        }
-
-        .calendar-events {
-            text-align: left;
-        }
-
-        .calendar-event {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.75rem;
-            margin-bottom: 0.5rem;
-            background: rgba(102, 126, 234, 0.1);
-            border-radius: 10px;
-            font-size: 0.9rem;
-        }
-
-        /* Analytics Chart */
-        .chart-container {
-            height: 200px;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #667eea;
-            font-weight: 600;
-            text-align: center;
-        }
-
-        /* Attendee Management */
-        .attendee-item {
-            display: flex;
-            align-items: center;
-            padding: 1rem;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-        }
-
-        .attendee-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            margin-right: 1rem;
-        }
-
-        .attendee-info h5 {
-            color: #333;
-            margin-bottom: 0.25rem;
-        }
-
-        .attendee-info p {
-            color: #666;
-            font-size: 0.8rem;
-        }
-
-        /* Quick Actions */
-        .quick-actions {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-        }
-
-        .quick-action {
-            padding: 1.5rem;
-            background: rgba(255, 255, 255, 0.7);
-            border-radius: 15px;
-            text-align: center;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            border: 2px solid transparent;
-        }
-
-        .quick-action:hover {
-            background: rgba(255, 255, 255, 0.9);
-            border-color: rgba(102, 126, 234, 0.3);
-            transform: translateY(-2px);
-        }
-
-        .quick-action .action-icon {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-            color: #667eea;
-        }
-
-        .notification-badge {
-            position: relative;
-        }
-
-        .notification-badge::after {
-            content: '3';
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            background: #f44336;
-            color: white;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.7rem;
-            font-weight: 600;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .sidebar {
-                position: fixed;
-                left: -280px;
-                height: 100vh;
-                z-index: 1000;
-                transition: left 0.3s ease;
-            }
-
-            .sidebar.open {
-                left: 0;
-            }
-
-            .main-content {
-                padding: 1rem;
-            }
-
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .header {
-                padding: 1rem;
-            }
-
-            .header h2 {
-                font-size: 1.5rem;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <!-- Sidebar Navigation -->
-        <nav class="sidebar">
-            <div class="logo">
-                <h1>EventFlow Pro</h1>
-                <div class="owner-name">by Meraj</div>
-            </div>
-            <div class="nav-menu">
-                <a href="#" class="nav-item active">
-                    <span class="nav-icon">📊</span>
-                    Dashboard
-                </a>
-                <a href="#" class="nav-item">
-                    <span class="nav-icon">🎉</span>
-                    Events
-                </a>
-                <a href="#" class="nav-item">
-                    <span class="nav-icon">👥</span>
-                    Attendees
-                </a>
-                <a href="#" class="nav-item">
-                    <span class="nav-icon">🎫</span>
-                    Tickets
-                </a>
-                <a href="#" class="nav-item">
-                    <span class="nav-icon">📈</span>
-                    Analytics
-                </a>
-                <a href="#" class="nav-item">
-                    <span class="nav-icon">💰</span>
-                    Revenue
-                </a>
-                <a href="#" class="nav-item">
-                    <span class="nav-icon">💬</span>
-                    Communications
-                </a>
-                <a href="#" class="nav-item">
-                    <span class="nav-icon">🏢</span>
-                    Venues
-                </a>
-                <a href="#" class="nav-item">
-                    <span class="nav-icon">⚙️</span>
-                    Settings
-                </a>
-                <a href="#" class="nav-item notification-badge">
-                    <span class="nav-icon">🔔</span>
-                    Notifications
-                </a>
-            </div>
+  return (
+    <div style={{
+      fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      minHeight: '100vh',
+      color: '#333'
+    }}>
+      <div style={{ display: 'flex', minHeight: '100vh' }}>
+        {/* Sidebar */}
+        <nav style={{
+          width: '280px',
+          background: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(20px)',
+          borderRight: '1px solid rgba(255, 255, 255, 0.2)',
+          padding: '2rem 0',
+          boxShadow: '2px 0 20px rgba(0, 0, 0, 0.1)'
+        }}>
+          <div style={{
+            padding: '0 2rem 2rem',
+            borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
+            marginBottom: '2rem'
+          }}>
+            <h1 style={{
+              background: 'linear-gradient(135deg, #667eea, #764ba2)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              fontSize: '1.8rem',
+              fontWeight: '700',
+              marginBottom: '0.5rem',
+              margin: 0
+            }}>EventFlow Pro</h1>
+            <div style={{ color: '#666', fontSize: '0.9rem', fontStyle: 'italic' }}>by Meraj</div>
+          </div>
+          
+          <div>
+            {[
+              { icon: '📊', label: 'Dashboard', id: 'dashboard' },
+              { icon: '🎉', label: 'Events', id: 'events' },
+              { icon: '👥', label: 'Attendees', id: 'attendees' },
+              { icon: '🎫', label: 'Tickets', id: 'tickets' },
+              { icon: '📈', label: 'Analytics', id: 'analytics' },
+              { icon: '⚙️', label: 'Settings', id: 'settings' }
+            ].map(item => (
+              <a
+                key={item.id}
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCurrentView(item.id);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '1rem 2rem',
+                  color: currentView === item.id ? '#667eea' : '#666',
+                  textDecoration: 'none',
+                  transition: 'all 0.3s ease',
+                  borderLeft: `3px solid ${currentView === item.id ? '#667eea' : 'transparent'}`,
+                  background: currentView === item.id ? 'linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1))' : 'transparent'
+                }}
+              >
+                <span style={{ fontSize: '1.2rem', marginRight: '0.75rem', width: '20px', textAlign: 'center' }}>
+                  {item.icon}
+                </span>
+                {item.label}
+              </a>
+            ))}
+          </div>
         </nav>
 
-        <!-- Main Content Area -->
-        <main class="main-content">
-            <!-- Header -->
-            <header class="header">
-                <h2>Dashboard Overview</h2>
-                <div class="header-actions">
-                    <button class="btn btn-secondary">📊 Generate Report</button>
-                    <button class="btn btn-primary">➕ Create Event</button>
-                </div>
-            </header>
-
-            <!-- Stats Cards -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: rgba(76, 175, 80, 0.1); color: #4CAF50;">
-                        🎉
-                    </div>
-                    <div class="stat-value">24</div>
-                    <div class="stat-label">Active Events</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: rgba(33, 150, 243, 0.1); color: #2196F3;">
-                        👥
-                    </div>
-                    <div class="stat-value">1,247</div>
-                    <div class="stat-label">Total Attendees</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: rgba(255, 152, 0, 0.1); color: #FF9800;">
-                        💰
-                    </div>
-                    <div class="stat-value">$45,280</div>
-                    <div class="stat-label">Monthly Revenue</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: rgba(156, 39, 176, 0.1); color: #9C27B0;">
-                        📈
-                    </div>
-                    <div class="stat-value">89%</div>
-                    <div class="stat-label">Success Rate</div>
-                </div>
+        {/* Main Content */}
+        <main style={{ flex: 1, padding: '2rem', overflowY: 'auto' }}>
+          {/* Header */}
+          <header style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            background: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(20px)',
+            padding: '1.5rem 2rem',
+            borderRadius: '20px',
+            marginBottom: '2rem',
+            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)'
+          }}>
+            <h2 style={{ color: '#333', fontSize: '2rem', fontWeight: '600', margin: 0 }}>
+              {currentView.charAt(0).toUpperCase() + currentView.slice(1)} {currentView === 'dashboard' ? 'Overview' : ''}
+            </h2>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              {currentUser ? (
+                <>
+                  <span style={{ color: '#666' }}>Welcome, {currentUser.email}</span>
+                  <button
+                    onClick={handleLogout}
+                    style={{
+                      padding: '0.75rem 1.5rem',
+                      border: 'none',
+                      borderRadius: '50px',
+                      cursor: 'pointer',
+                      fontWeight: '600',
+                      background: 'rgba(255, 255, 255, 0.9)',
+                      color: '#667eea',
+                      border: '2px solid rgba(102, 126, 234, 0.3)'
+                    }}
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setShowAuthModal(true)}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    border: 'none',
+                    borderRadius: '50px',
+                    cursor: 'pointer',
+                    fontWeight: '600',
+                    background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                    color: 'white',
+                    boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)'
+                  }}
+                >
+                  Login / Sign Up
+                </button>
+              )}
+              
+              {currentUser && currentView === 'events' && (
+                <button
+                  onClick={() => setCurrentView('create-event')}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    border: 'none',
+                    borderRadius: '50px',
+                    cursor: 'pointer',
+                    fontWeight: '600',
+                    background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                    color: 'white',
+                    boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)'
+                  }}
+                >
+                  ➕ Create Event
+                </button>
+              )}
             </div>
+          </header>
 
-            <!-- Dashboard Widgets -->
-            <div class="dashboard-grid">
-                <!-- Upcoming Events -->
-                <div class="widget">
-                    <div class="widget-header">
-                        <h3 class="widget-title">🗓️ Upcoming Events</h3>
-                    </div>
-                    <div class="event-list">
-                        <div class="event-item upcoming">
-                            <div class="event-details">
-                                <h4>Tech Innovation Summit 2025</h4>
-                                <p>📍 Grand Convention Center • 🕐 Mar 15, 2025 • 👥 450 registered</p>
-                            </div>
-                            <span class="event-status status-upcoming">Upcoming</span>
-                        </div>
-                        <div class="event-item ongoing">
-                            <div class="event-details">
-                                <h4>Digital Marketing Workshop</h4>
-                                <p>📍 Business Plaza Hotel • 🕐 Today, 2:00 PM • 👥 120 attending</p>
-                            </div>
-                            <span class="event-status status-ongoing">🔴 Live</span>
-                        </div>
-                        <div class="event-item upcoming">
-                            <div class="event-details">
-                                <h4>Annual Charity Gala</h4>
-                                <p>📍 Riverside Venue • 🕐 Mar 22, 2025 • 👥 300 registered</p>
-                            </div>
-                            <span class="event-status status-upcoming">Upcoming</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Calendar & Quick Stats -->
-                <div class="widget calendar-widget">
-                    <div class="widget-header">
-                        <h3 class="widget-title">📅 Today's Schedule</h3>
-                    </div>
-                    <div class="calendar-date">09</div>
-                    <div class="calendar-month">August 2025</div>
-                    <div class="calendar-events">
-                        <div class="calendar-event">
-                            <span>🔧 Workshop Setup</span>
-                            <span>10:00 AM</span>
-                        </div>
-                        <div class="calendar-event">
-                            <span>📢 Marketing Event</span>
-                            <span>2:00 PM</span>
-                        </div>
-                        <div class="calendar-event">
-                            <span>👥 Team Meeting</span>
-                            <span>4:30 PM</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Analytics Chart -->
-                <div class="widget">
-                    <div class="widget-header">
-                        <h3 class="widget-title">📊 Event Analytics</h3>
-                    </div>
-                    <div class="chart-container">
-                        <div>
-                            <strong>📈 Interactive Analytics Dashboard</strong><br>
-                            <small>Revenue & Attendance Trends</small><br>
-                            <small style="color: #999;">Chart visualization would display here</small>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Attendees -->
-                <div class="widget">
-                    <div class="widget-header">
-                        <h3 class="widget-title">🎯 Recent Registrations</h3>
-                    </div>
-                    <div class="attendee-list">
-                        <div class="attendee-item">
-                            <div class="attendee-avatar">JD</div>
-                            <div class="attendee-info">
-                                <h5>John Doe</h5>
-                                <p>✅ Registered for Tech Summit • 🎫 VIP Ticket</p>
-                            </div>
-                        </div>
-                        <div class="attendee-item">
-                            <div class="attendee-avatar">SM</div>
-                            <div class="attendee-info">
-                                <h5>Sarah Miller</h5>
-                                <p>✅ Registered for Marketing Workshop • 🎫 Standard</p>
-                            </div>
-                        </div>
-                        <div class="attendee-item">
-                            <div class="attendee-avatar">RJ</div>
-                            <div class="attendee-info">
-                                <h5>Robert Johnson</h5>
-                                <p>✅ Registered for Charity Gala • 🎫 Premium</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="widget">
-                <div class="widget-header">
-                    <h3 class="widget-title">⚡ Quick Actions</h3>
-                </div>
-                <div class="quick-actions">
-                    <div class="quick-action">
-                        <div class="action-icon">🎉</div>
-                        <h4>Create Event</h4>
-                    </div>
-                    <div class="quick-action">
-                        <div class="action-icon">👥</div>
-                        <h4>Manage Attendees</h4>
-                    </div>
-                    <div class="quick-action">
-                        <div class="action-icon">🎫</div>
-                        <h4>Generate Tickets</h4>
-                    </div>
-                    <div class="quick-action">
-                        <div class="action-icon">📧</div>
-                        <h4>Send Invitations</h4>
-                    </div>
-                    <div class="quick-action">
-                        <div class="action-icon">📊</div>
-                        <h4>View Reports</h4>
-                    </div>
-                    <div class="quick-action">
-                        <div class="action-icon">⚙️</div>
-                        <h4>Settings</h4>
-                    </div>
-                </div>
-            </div>
+          {/* Content based on current view */}
+          {currentView === 'dashboard' && <DashboardView stats={stats} events={events} registerForEvent={registerForEvent} />}
+          {currentView === 'events' && <EventsView events={events} registerForEvent={registerForEvent} currentUser={currentUser} />}
+          {currentView === 'create-event' && <CreateEventView onCreateEvent={createEvent} />}
+          {currentView === 'attendees' && <AttendeesView />}
+          {currentView === 'analytics' && <AnalyticsView stats={stats} />}
+          {currentView === 'settings' && <SettingsView currentUser={currentUser} />}
         </main>
+      </div>
+
+      {/* Auth Modal */}
+      {showAuthModal && <AuthModal authMode={authMode} setAuthMode={setAuthMode} onAuth={handleAuth} onClose={() => setShowAuthModal(false)} />}
     </div>
+  );
+}
 
-    <script>
-        // Add interactive functionality
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', function(e) {
-                e.preventDefault();
-                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
+// Dashboard Component
+function DashboardView({ stats, events, registerForEvent }) {
+  return (
+    <div>
+      {/* Stats Cards */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+        gap: '1.5rem',
+        marginBottom: '2rem'
+      }}>
+        {[
+          { icon: '🎉', value: stats.activeEvents, label: 'Active Events', color: '#4CAF50' },
+          { icon: '👥', value: stats.totalAttendees.toLocaleString(), label: 'Total Attendees', color: '#2196F3' },
+          { icon: '💰', value: `$${stats.monthlyRevenue.toLocaleString()}`, label: 'Monthly Revenue', color: '#FF9800' },
+          { icon: '📈', value: `${stats.successRate}%`, label: 'Success Rate', color: '#9C27B0' }
+        ].map((stat, index) => (
+          <div key={index} style={{
+            background: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(20px)',
+            padding: '2rem',
+            borderRadius: '20px',
+            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
+            transition: 'transform 0.3s ease'
+          }}>
+            <div style={{
+              width: '60px',
+              height: '60px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.8rem',
+              marginBottom: '1rem',
+              background: `${stat.color}20`,
+              color: stat.color
+            }}>
+              {stat.icon}
+            </div>
+            <div style={{ fontSize: '2.5rem', fontWeight: '700', color: '#333', marginBottom: '0.5rem' }}>
+              {stat.value}
+            </div>
+            <div style={{ color: '#666', fontSize: '0.9rem' }}>{stat.label}</div>
+          </div>
+        ))}
+      </div>
 
-        // Add hover effects for stats cards
-        document.querySelectorAll('.stat-card').forEach(card => {
-            card.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-5px) scale(1.02)';
-            });
-            
-            card.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateY(0) scale(1)';
-            });
-        });
+      {/* Quick Events List */}
+      <div style={{
+        background: 'rgba(255, 255, 255, 0.95)',
+        backdropFilter: 'blur(20px)',
+        borderRadius: '20px',
+        padding: '2rem',
+        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)'
+      }}>
+        <h3 style={{ marginBottom: '1.5rem', color: '#333' }}>🗓️ Upcoming Events</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {events.map(event => (
+            <div key={event.id} style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '1.5rem',
+              background: 'rgba(255, 255, 255, 0.7)',
+              borderRadius: '15px',
+              borderLeft: '4px solid #4CAF50'
+            }}>
+              <div style={{ flex: 1 }}>
+                <h4 style={{ color: '#333', marginBottom: '0.5rem' }}>{event.name}</h4>
+                <p style={{ color: '#666', fontSize: '0.9rem', margin: 0 }}>
+                  📍 {event.venue} • 🕐 {event.date} • 👥 {event.attendees} registered
+                </p>
+              </div>
+              <button
+                onClick={() => registerForEvent(event.id)}
+                style={{
+                  padding: '0.5rem 1rem',
+                  borderRadius: '50px',
+                  fontSize: '0.8rem',
+                  fontWeight: '600',
+                  border: 'none',
+                  background: 'rgba(76, 175, 80, 0.1)',
+                  color: '#4CAF50',
+                  cursor: 'pointer'
+                }}
+              >
+                Register
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
-        // Quick actions functionality
-        document.querySelectorAll('.quick-action').forEach(action => {
-            action.addEventListener('click', function() {
-                const actionName = this.querySelector('h4').textContent;
-                alert(`${actionName} clicked! This would navigate to the respective module.`);
-            });
-        });
+// Events View Component
+function EventsView({ events, registerForEvent, currentUser }) {
+  return (
+    <div style={{
+      background: 'rgba(255, 255, 255, 0.95)',
+      backdropFilter: 'blur(20px)',
+      borderRadius: '20px',
+      padding: '2rem',
+      boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)'
+    }}>
+      <h3 style={{ marginBottom: '2rem', color: '#333' }}>All Events</h3>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '2rem' }}>
+        {events.map(event => (
+          <div key={event.id} style={{
+            background: 'rgba(255, 255, 255, 0.9)',
+            borderRadius: '15px',
+            padding: '1.5rem',
+            boxShadow: '0 5px 20px rgba(0, 0, 0, 0.1)',
+            transition: 'transform 0.3s ease'
+          }}>
+            <h4 style={{ color: '#333', marginBottom: '1rem' }}>{event.name}</h4>
+            <p style={{ color: '#666', marginBottom: '0.5rem' }}>📅 Date: {event.date}</p>
+            <p style={{ color: '#666', marginBottom: '0.5rem' }}>📍 Venue: {event.venue}</p>
+            <p style={{ color: '#666', marginBottom: '1rem' }}>👥 Attendees: {event.attendees}</p>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                onClick={() => registerForEvent(event.id)}
+                style={{
+                  flex: 1,
+                  padding: '0.75rem',
+                  border: 'none',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                  color: 'white',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                {currentUser ? 'Register' : 'Login to Register'}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
-        // Event item interactions
-        document.querySelectorAll('.event-item').forEach(item => {
-            item.addEventListener('click', function() {
-                const eventName = this.querySelector('h4').textContent;
-                alert(`Opening details for: ${eventName}`);
-            });
-        });
+// Create Event Component
+function CreateEventView({ onCreateEvent }) {
+  const [formData, setFormData] = useState({
+    name: '',
+    date: '',
+    venue: '',
+    description: '',
+    maxAttendees: ''
+  });
 
-        // Button interactions
-        document.querySelectorAll('.btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                if (this.textContent.includes('Create Event')) {
-                    alert('🎉 Opening Event Creation Wizard...');
-                } else if (this.textContent.includes('Generate Report')) {
-                    alert('📊 Generating comprehensive analytics report...');
-                }
-            });
-        });
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.name || !formData.date || !formData.venue) {
+      alert('Please fill in all required fields');
+      return;
+    }
+    onCreateEvent(formData);
+    setFormData({ name: '', date: '', venue: '', description: '', maxAttendees: '' });
+  };
 
-        // Add real-time updates simulation
-        setInterval(() => {
-            const attendeeCount = document.querySelector('.stat-value');
-            if (attendeeCount && attendeeCount.textContent === '1,247') {
-                const currentCount = parseInt(attendeeCount.textContent.replace(',', ''));
-                attendeeCount.textContent = (currentCount + Math.floor(Math.random() * 3)).toLocaleString();
-            }
-        }, 30000);
+  return (
+    <div style={{
+      background: 'rgba(255, 255, 255, 0.95)',
+      backdropFilter: 'blur(20px)',
+      borderRadius: '20px',
+      padding: '2rem',
+      boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
+      maxWidth: '600px'
+    }}>
+      <h3 style={{ marginBottom: '2rem', color: '#333' }}>Create New Event</h3>
+      <form onSubmit={handleSubmit}>
+        <div style={{ marginBottom: '1rem' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem', color: '#333', fontWeight: '600' }}>
+            Event Name *
+          </label>
+          <input
+            type="text"
+            value={formData.name}
+            onChange={(e) => setFormData({...formData, name: e.target.value})}
+            style={{
+              width: '100%',
+              padding: '0.75rem',
+              border: '2px solid rgba(102, 126, 234, 0.3)',
+              borderRadius: '10px',
+              fontSize: '1rem'
+            }}
+            required
+          />
+        </div>
+        
+        <div style={{ marginBottom: '1rem' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem', color: '#333', fontWeight: '600' }}>
+            Date *
+          </label>
+          <input
+            type="date"
+            value={formData.date}
+            onChange={(e) => setFormData({...formData, date: e.target.value})}
+            style={{
+              width: '100%',
+              padding: '0.75rem',
+              border: '2px solid rgba(102, 126, 234, 0.3)',
+              borderRadius: '10px',
+              fontSize: '1rem'
+            }}
+            required
+          />
+        </div>
 
-        // Mobile sidebar toggle (for future mobile implementation)
-        function toggleSidebar() {
-            document.querySelector('.sidebar').classList.toggle('open');
-        }
+        <div style={{ marginBottom: '1rem' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem', color: '#333', fontWeight: '600' }}>
+            Venue *
+          </label>
+          <input
+            type="text"
+            value={formData.venue}
+            onChange={(e) => setFormData({...formData, venue: e.target.value})}
+            style={{
+              width: '100%',
+              padding: '0.75rem',
+              border: '2px solid rgba(102, 126, 234, 0.3)',
+              borderRadius: '10px',
+              fontSize: '1rem'
+            }}
+            required
+          />
+        </div>
 
-        // Add welcome message for Meraj
-        window.addEventListener('load', function() {
-            setTimeout(() => {
-                console.log('🎉 Welcome to EventFlow Pro, Meraj! Dashboard loaded successfully.');
-            }, 1000);
-        });
-    </script>
-</body>
-</html>
+        <div style={{ marginBottom: '1rem' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem', color: '#333', fontWeight: '600' }}>
+            Max Attendees
+          </label>
+          <input
+            type="number"
+            value={formData.maxAttendees}
+            onChange={(e) => setFormData({...formData, maxAttendees: e.target.value})}
+            style={{
+              width: '100%',
+              padding: '0.75rem',
+              border: '2px solid rgba(102, 126, 234, 0.3)',
+              borderRadius: '10px',
+              fontSize: '1rem'
+            }}
+          />
+        </div>
+
+        <div style={{ marginBottom: '2rem' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem', color: '#333', fontWeight: '600' }}>
+            Description
+          </label>
+          <textarea
+            value={formData.description}
+            onChange={(e) => setFormData({...formData, description: e.target.value})}
+            rows="4"
+            style={{
+              width: '100%',
+              padding: '0.75rem',
+              border: '2px solid rgba(102, 126, 234, 0.3)',
+              borderRadius: '10px',
+              fontSize: '1rem',
+              resize: 'vertical'
+            }}
+          />
+        </div>
+
+        <button
+          type="submit"
+          style={{
+            width: '100%',
+            padding: '1rem',
+            border: 'none',
+            borderRadius: '10px',
+            background: 'linear-gradient(135deg, #667eea, #764ba2)',
+            color: 'white',
+            fontSize: '1.1rem',
+            fontWeight: '600',
+            cursor: 'pointer'
+          }}
+        >
+          Create Event
+        </button>
+      </form>
+    </div>
+  );
+}
+
+// Auth Modal Component
+function AuthModal({ authMode, setAuthMode, onAuth, onClose }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!email || !password) {
+      alert('Please fill in all fields');
+      return;
+    }
+    onAuth(email, password);
+  };
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'rgba(0, 0, 0, 0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000
+    }}>
+      <div style={{
+        background: 'white',
+        padding: '2rem',
+        borderRadius: '20px',
+        width: '90%',
+        maxWidth: '400px',
+        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h3 style={{ margin: 0, color: '#333' }}>
+            {authMode === 'login' ? 'Login' : 'Sign Up'}
+          </h3>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '1.5rem',
+              cursor: 'pointer',
+              color: '#999'
+            }}
+          >
+            ×
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', color: '#333' }}>Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                border: '2px solid rgba(102, 126, 234, 0.3)',
+                borderRadius: '10px',
+                fontSize: '1rem'
+              }}
+              required
+            />
+          </div>
+
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', color: '#333' }}>Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                border: '2px solid rgba(102, 126, 234, 0.3)',
+                borderRadius: '10px',
+                fontSize: '1rem'
+              }}
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            style={{
+              width: '100%',
+              padding: '0.75rem',
+              border: 'none',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #667eea, #764ba2)',
+              color: 'white',
+              fontSize: '1rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              marginBottom: '1rem'
+            }}
+          >
+            {authMode === 'login' ? 'Login' : 'Create Account'}
+          </button>
+        </form>
+
+        <p style={{ textAlign: 'center', color: '#666', margin: 0 }}>
+          {authMode === 'login' ? "Don't have an account?" : "Already have an account?"}
+          <button
+            onClick={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#667eea',
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              marginLeft: '0.5rem'
+            }}
+          >
+            {authMode === 'login' ? 'Sign Up' : 'Login'}
+          </button>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// Placeholder components for other views
+function AttendeesView() {
+  return (
+    <div style={{
+      background: 'rgba(255, 255, 255, 0.95)',
+      backdropFilter: 'blur(20px)',
+      borderRadius: '20px',
+      padding: '2rem',
+      boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
+      textAlign: 'center'
+    }}>
+      <h3>👥 Attendees Management</h3>
+      <p style={{ color: '#666' }}>Coming soon in the full version!</p>
+    </div>
+  );
+}
+
+function AnalyticsView({ stats }) {
+  return (
+    <div style={{
+      background: 'rgba(255, 255, 255, 0.95)',
+      backdropFilter: 'blur(20px)',
+      borderRadius: '20px',
+      padding: '2rem',
+      boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)'
+    }}>
+      <h3>📈 Analytics Dashboard</h3>
+      <div style={{
+        height: '300px',
+        background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1))',
+        borderRadius: '15px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: '#667eea',
+        fontSize: '1.2rem',
+        marginTop: '2rem'
+      }}>
+        📊 Interactive charts will be here in the full version!
+      </div>
+    </div>
+  );
+}
+
+function SettingsView({ currentUser }) {
+  return (
+    <div style={{
+      background: 'rgba(255, 255, 255, 0.95)',
+      backdropFilter: 'blur(20px)',
+      borderRadius: '20px',
+      padding: '2rem',
+      boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)'
+    }}>
+      <h3>⚙️ Settings</h3>
+      {currentUser ? (
+        <div>
+          <p style={{ color: '#666' }}>Profile: {currentUser.email}</p>
+          <p style={{ color: '#666' }}>Account settings coming soon!</p>
+        </div>
+      ) : (
+        <p style={{ color: '#666' }}>Please login to access settings.</p>
+      )}
+    </div>
+  );
+}
+
+export default EventFlowPro;
