@@ -670,7 +670,7 @@
                         </div>
                     </div>
 
-                    <!-- Calendar & Quick Stats -->
+                    <!-- ✅ UPDATED: Calendar Widget with Auto Date -->
                     <div class="widget calendar-widget">
                         <div class="widget-header">
                             <h3 class="widget-title">📅 Today's Schedule</h3>
@@ -876,6 +876,16 @@
         let currentUser = null;
         let userEvents = [];
         let userRegistrations = [];
+
+        // ✅ NEW: Auto-updating Calendar Date Function
+        function updateCalendarDate() {
+            const now = new Date();
+            const day = now.getDate();
+            const monthYear = now.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+            document.getElementById('calendar-day').textContent = String(day).padStart(2, '0');
+            document.getElementById('calendar-month-year').textContent = monthYear;
+        }
 
         // Navigation Functions
         function switchView(viewName) {
@@ -1119,11 +1129,14 @@
             });
         });
 
-        // Initialize App
+        // ✅ UPDATED: Initialize App with auto date
         function initializeApp() {
             // Show auth view by default
             switchView('auth');
             showLogin();
+
+            // ✅ Set calendar to today's real date automatically
+            updateCalendarDate();
             
             // Set minimum date for event creation to today
             const today = new Date().toISOString().split('T')[0];
@@ -1142,9 +1155,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
